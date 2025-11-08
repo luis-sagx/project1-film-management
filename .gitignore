@@ -1,0 +1,25 @@
+# Directorio de dependencias.
+node_modules/
+# Archivos de caché generados por npm.
+.npm
+
+# Archivos Generados por el Sistema Operativo
+.DS_Store # macOS
+Thumbs.db # Windows
+
+# Resultados de Pruebas y Cobertura (Jest/Supertest)
+# Directorios de reportes de cobertura de pruebas
+/coverage
+
+# Archivos de Compilación/Distribución (aunque no compiles, es buena práctica)
+/dist
+/build
+/out
+
+# Editores y IDEs
+.vscode/ # Visual Studio Code
+.idea/ # WebStorm/IntelliJ
+*.sublime-workspace # Sublime Text
+
+# Archivos generados por ESLint (si los configuras para output)
+.eslintcache
