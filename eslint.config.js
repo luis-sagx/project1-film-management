@@ -6,6 +6,16 @@ module.exports = [
     languageOptions: {
       ecmaVersion: 2021,
       sourceType: 'commonjs',
+      globals: {
+        // Variables globales de Node.js
+        process: 'readonly',
+        console: 'readonly',
+        __dirname: 'readonly',
+        __filename: 'readonly',
+        module: 'readonly',
+        require: 'readonly',
+        exports: 'readonly',
+      },
     },
     rules: {
       ...js.configs.recommended.rules,
@@ -16,7 +26,6 @@ module.exports = [
       'no-multi-spaces': ['error'], // no permitir espacios innecesarios
       curly: ['error', 'all'], // requerir llaves siempre en bloques (if, for, etc.)
       eqeqeq: ['error', 'always'], // exigir uso de === y !== en lugar de == y !=
-      'no-console': ['warn'], // no permitir console.log en código final
     },
   },
 ];

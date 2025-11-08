@@ -3,6 +3,9 @@ node_modules/
 # Archivos de caché generados por npm.
 .npm
 
+# Variables de entorno (credenciales sensibles)
+.env
+
 # Archivos Generados por el Sistema Operativo
 .DS_Store # macOS
 Thumbs.db # Windows

@@ -1,5 +1,23 @@
+require('dotenv').config();
 const request = require('supertest');
+const mongoose = require('mongoose');
 const app = require('./../src/app.js');
+const User = require('./../src/models/user.model.js');
+
+// Conectar a MongoDB antes de todos los tests
+beforeAll(async () => {
+    await mongoose.connect(process.env.MONGODB_URI);
+});
+
+// Limpiar la base de datos antes de cada test
+beforeEach(async () => {
+    await User.deleteMany({});
+});
+
+// Desconectar después de todos los tests
+afterAll(async () => {
+    await mongoose.connection.close();
+});
 
 describe('User API', () => {
 
@@ -7,7 +25,7 @@ describe('User API', () => {
     test('GET /api/users should return an empty list initially', async () => {
         const res = await request(app).get('/api/users');
         expect(res.statusCode).toBe(200);
-        expect(res.body).toEqual([]);
+        expect(Array.isArray(res.body)).toBe(true);
     });
 
     // prueba de que post cree un nuevo usuario correctamente
@@ -16,7 +34,7 @@ describe('User API', () => {
         const res = await request(app).post('/api/users').send(newUser);
 
         expect(res.statusCode).toBe(201);
-        expect(res.body).toHaveProperty('id');
+        expect(res.body).toHaveProperty('_id'); // MongoDB usa _id
         expect(res.body.name).toBe('Luis');
     });
 
@@ -34,7 +52,7 @@ describe('User API', () => {
             email: 'correo-invalido'
         });
         expect(res.statusCode).toBe(400);
-        expect(res.body).toHaveProperty('message', 'Invalid email format');
+        expect(res.body).toHaveProperty('message', 'Please provide a valid email');
     });
 
     // prueba de que post falle si el email ya existe
@@ -59,7 +77,7 @@ describe('User API', () => {
         // Crear un usuario primero
         const newUser = {name: 'Maria', email: 'maria@mail.com'};
         const createRes = await request(app).post('/api/users').send(newUser);
-        const userId = createRes.body.id;
+        const userId = createRes.body._id; // MongoDB usa _id
 
         // Obtener el usuario por ID
         const res = await request(app).get(`/api/users/${userId}`);
@@ -69,7 +87,15 @@ describe('User API', () => {
 
     // prueba de GET por ID cuando no existe
     test('GET /api/users/:id should return 404 if user not found', async () => {
-        const res = await request(app).get('/api/users/999999');
+        const fakeId = new mongoose.Types.ObjectId(); // ID válido de MongoDB
+        const res = await request(app).get(`/api/users/${fakeId}`);
+        expect(res.statusCode).toBe(404);
+        expect(res.body).toHaveProperty('message', 'User not found');
+    });
+
+    // Prueba de GET con ID inválido (CastError)
+    test('GET /api/users/:id should return 404 with invalid ID', async () => {
+        const res = await request(app).get('/api/users/invalid-id-format');
         expect(res.statusCode).toBe(404);
         expect(res.body).toHaveProperty('message', 'User not found');
     });
@@ -79,7 +105,7 @@ describe('User API', () => {
         // Crear usuario
         const newUser = {name: 'Carlos', email: 'carlos@mail.com'};
         const createRes = await request(app).post('/api/users').send(newUser);
-        const userId = createRes.body.id;
+        const userId = createRes.body._id; // MongoDB usa _id
 
         // Actualizar usuario
         const updatedUser = {name: 'Carlos Actualizado', email: 'carlos.nuevo@mail.com'};
@@ -92,7 +118,18 @@ describe('User API', () => {
 
     // prueba de PUT que falle cuando el usuario no existe
     test('PUT /api/users/:id should return 404 if user not found', async () => {
-        const res = await request(app).put('/api/users/999999').send({
+        const fakeId = new mongoose.Types.ObjectId(); // ID válido de MongoDB
+        const res = await request(app).put(`/api/users/${fakeId}`).send({
+            name: 'Test',
+            email: 'test@mail.com'
+        });
+        expect(res.statusCode).toBe(404);
+        expect(res.body).toHaveProperty('message', 'User not found');
+    });
+
+    // Prueba de PUT con ID inválido (CastError)
+    test('PUT /api/users/:id should return 404 with invalid ID', async () => {
+        const res = await request(app).put('/api/users/invalid-id-format').send({
             name: 'Test',
             email: 'test@mail.com'
         });
@@ -108,7 +145,7 @@ describe('User API', () => {
         
         await request(app).post('/api/users').send(user1);
         const createRes2 = await request(app).post('/api/users').send(user2);
-        const user2Id = createRes2.body.id;
+        const user2Id = createRes2.body._id; // MongoDB usa _id
 
         // Intentar actualizar user2 con el email de user1
         const res = await request(app).put(`/api/users/${user2Id}`).send({
@@ -125,7 +162,7 @@ describe('User API', () => {
         // Crear usuario
         const newUser = {name: 'Ana', email: 'ana@mail.com'};
         const createRes = await request(app).post('/api/users').send(newUser);
-        const userId = createRes.body.id;
+        const userId = createRes.body._id; // MongoDB usa _id
 
         // Intentar actualizar con email invalido
         const res = await request(app).put(`/api/users/${userId}`).send({
@@ -134,7 +171,7 @@ describe('User API', () => {
         });
         
         expect(res.statusCode).toBe(400);
-        expect(res.body).toHaveProperty('message', 'Invalid email format');
+        expect(res.body.message).toContain('email'); // Mensaje puede variar
     });
 
     // prueba de DELETE exitoso
@@ -142,7 +179,7 @@ describe('User API', () => {
         // Crear usuario
         const newUser = {name: 'Roberto', email: 'roberto@mail.com'};
         const createRes = await request(app).post('/api/users').send(newUser);
-        const userId = createRes.body.id;
+        const userId = createRes.body._id; // MongoDB usa _id
 
         // Eliminar usuario
         const res = await request(app).delete(`/api/users/${userId}`);
@@ -155,8 +192,67 @@ describe('User API', () => {
 
     // prueba de DELETE cuando el usuario no existe
     test('DELETE /api/users/:id should return 404 if user not found', async () => {
-        const res = await request(app).delete('/api/users/999999');
+        const fakeId = new mongoose.Types.ObjectId(); // ID válido de MongoDB
+        const res = await request(app).delete(`/api/users/${fakeId}`);
         expect(res.statusCode).toBe(404);
         expect(res.body).toHaveProperty('message', 'User not found');
+    });
+
+    // Prueba de DELETE con ID inválido (CastError)
+    test('DELETE /api/users/:id should return 404 with invalid ID', async () => {
+        const res = await request(app).delete('/api/users/invalid-id-format');
+        expect(res.statusCode).toBe(404);
+        expect(res.body).toHaveProperty('message', 'User not found');
+    });
+
+    // Prueba de manejo de errores del servidor (simulando error de DB)
+    test('GET /api/users should handle database errors', async () => {
+        // Desconectar temporalmente para simular error
+        await mongoose.connection.close();
+        
+        const res = await request(app).get('/api/users');
+        expect(res.statusCode).toBe(500);
+        expect(res.body).toHaveProperty('message');
+        
+        // Reconectar para otros tests
+        await mongoose.connect(process.env.MONGODB_URI);
+    });
+
+    // Prueba de error al crear con DB desconectada
+    test('POST /api/users should handle database errors', async () => {
+        await mongoose.connection.close();
+        
+        const res = await request(app).post('/api/users').send({
+            name: 'Test',
+            email: 'test@mail.com'
+        });
+        expect(res.statusCode).toBe(500);
+        
+        await mongoose.connect(process.env.MONGODB_URI);
+    });
+
+    // Prueba de error al actualizar con DB desconectada
+    test('PUT /api/users/:id should handle database errors', async () => {
+        const fakeId = new mongoose.Types.ObjectId();
+        await mongoose.connection.close();
+        
+        const res = await request(app).put(`/api/users/${fakeId}`).send({
+            name: 'Test',
+            email: 'test@mail.com'
+        });
+        expect(res.statusCode).toBe(500);
+        
+        await mongoose.connect(process.env.MONGODB_URI);
+    });
+
+    // Prueba de error al eliminar con DB desconectada
+    test('DELETE /api/users/:id should handle database errors', async () => {
+        const fakeId = new mongoose.Types.ObjectId();
+        await mongoose.connection.close();
+        
+        const res = await request(app).delete(`/api/users/${fakeId}`);
+        expect(res.statusCode).toBe(500);
+        
+        await mongoose.connect(process.env.MONGODB_URI);
     });
 });

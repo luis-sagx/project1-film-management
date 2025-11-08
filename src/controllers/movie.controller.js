@@ -1,126 +1,144 @@
-// Simulación de una base de datos en memoria para películas
-let movies = [];
-
-/**
- * Valida que el año tenga 4 dígitos
- */
-function isValidYear(year) {
-  return /^\d{4}$/.test(String(year));
-}
+const Movie = require('../models/movie.model');
 
 /**
  * Devuelve todas las películas almacenadas
  */
-function getAllMovies(req, res) {
-  res.json(movies);
+async function getAllMovies(req, res) {
+  try {
+    const movies = await Movie.find();
+    res.json(movies);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching movies', error: error.message });
+  }
 }
 
 /**
  * Devuelve una película por ID
  */
-function getMovieById(req, res) {
-  const { id } = req.params;
-  const movie = movies.find(m => m.id === parseInt(id));
+async function getMovieById(req, res) {
+  try {
+    const { id } = req.params;
+    const movie = await Movie.findById(id);
 
-  if (!movie) {
-    return res.status(404).json({ message: 'Movie not found' });
+    if (!movie) {
+      return res.status(404).json({ message: 'Movie not found' });
+    }
+
+    res.json(movie);
+  } catch (error) {
+    // Si el ID no es válido para MongoDB
+    if (error.name === 'CastError') {
+      return res.status(404).json({ message: 'Movie not found' });
+    }
+    res.status(500).json({ message: 'Error fetching movie', error: error.message });
   }
-
-  res.json(movie);
 }
 
 /**
  * Crea una nueva película con validaciones
  */
-function createMovie(req, res) {
-  const { title, director, genre, duration, release_year } = req.body;
+async function createMovie(req, res) {
+  try {
+    const { title, director, genre, duration, release_year } = req.body;
 
-  // Validación: title es obligatorio
-  if (!title) {
-    return res.status(400).json({ message: 'Title is required' });
+    // Validación: title es obligatorio
+    if (!title) {
+      return res.status(400).json({ message: 'Title is required' });
+    }
+
+    // Validación: duration debe ser un número positivo
+    if (duration !== undefined && (typeof duration !== 'number' || duration <= 0)) {
+      return res.status(400).json({ message: 'Duration must be a positive number' });
+    }
+
+    // Crear la película
+    const newMovie = await Movie.create({
+      title,
+      director,
+      genre,
+      duration,
+      release_year
+    });
+
+    res.status(201).json(newMovie);
+  } catch (error) {
+    // Manejo de errores de validación de Mongoose
+    if (error.name === 'ValidationError') {
+      const messages = Object.values(error.errors).map(err => err.message);
+      return res.status(400).json({ message: messages[0] });
+    }
+
+    res.status(500).json({ message: 'Error creating movie', error: error.message });
   }
-
-  // Validación: duration debe ser un número positivo
-  if (duration !== undefined && (typeof duration !== 'number' || duration <= 0)) {
-    return res.status(400).json({ message: 'Duration must be a positive number' });
-  }
-
-  // Validación: release_year debe ser un número de 4 dígitos
-  if (release_year !== undefined && !isValidYear(release_year)) {
-    return res.status(400).json({ message: 'Release year must be a 4-digit number' });
-  }
-
-  // Creamos el objeto película
-  const newMovie = {
-    id: Date.now(), // ID simulado
-    title,
-    director: director || '',
-    genre: genre || '',
-    duration: duration || 0,
-    release_year: release_year || null
-  };
-
-  // Lo añadimos al arreglo de películas
-  movies.push(newMovie);
-
-  // Respondemos con la película creada
-  res.status(201).json(newMovie);
 }
 
 /**
  * Actualiza una película por ID
  */
-function updateMovie(req, res) {
-  const { id } = req.params;
-  const { title, director, genre, duration, release_year } = req.body;
+async function updateMovie(req, res) {
+  try {
+    const { id } = req.params;
+    const { title, director, genre, duration, release_year } = req.body;
 
-  const movieIndex = movies.findIndex(m => m.id === parseInt(id));
+    // Validación: title es obligatorio
+    if (!title) {
+      return res.status(400).json({ message: 'Title is required' });
+    }
 
-  if (movieIndex === -1) {
-    return res.status(404).json({ message: 'Movie not found' });
+    // Validación: duration debe ser un número positivo
+    if (duration !== undefined && (typeof duration !== 'number' || duration <= 0)) {
+      return res.status(400).json({ message: 'Duration must be a positive number' });
+    }
+
+    // Actualizar la película
+    const updatedMovie = await Movie.findByIdAndUpdate(
+      id,
+      { title, director, genre, duration, release_year },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedMovie) {
+      return res.status(404).json({ message: 'Movie not found' });
+    }
+
+    res.json(updatedMovie);
+  } catch (error) {
+    // Si el ID no es válido para MongoDB
+    if (error.name === 'CastError') {
+      return res.status(404).json({ message: 'Movie not found' });
+    }
+
+    // Manejo de errores de validación de Mongoose
+    if (error.name === 'ValidationError') {
+      const messages = Object.values(error.errors).map(err => err.message);
+      return res.status(400).json({ message: messages[0] });
+    }
+
+    res.status(500).json({ message: 'Error updating movie', error: error.message });
   }
-
-  // Validación: title es obligatorio
-  if (!title) {
-    return res.status(400).json({ message: 'Title is required' });
-  }
-
-  // Validación: duration debe ser un número positivo
-  if (duration !== undefined && (typeof duration !== 'number' || duration <= 0)) {
-    return res.status(400).json({ message: 'Duration must be a positive number' });
-  }
-
-  // Validación: release_year debe ser un número de 4 dígitos
-  if (release_year !== undefined && !isValidYear(release_year)) {
-    return res.status(400).json({ message: 'Release year must be a 4-digit number' });
-  }
-
-  // Actualizamos la película
-  movies[movieIndex] = {
-    ...movies[movieIndex],
-    title,
-    director: director || movies[movieIndex].director,
-    genre: genre || movies[movieIndex].genre,
-    duration: duration !== undefined ? duration : movies[movieIndex].duration,
-    release_year: release_year !== undefined ? release_year : movies[movieIndex].release_year
-  };
-
-  res.json(movies[movieIndex]);
 }
 
 /**
  * Elimina una película por ID
  */
-function deleteMovie(req, res) {
-  const { id } = req.params;
-  const movieIndex = movies.findIndex(m => m.id === parseInt(id));
+async function deleteMovie(req, res) {
+  try {
+    const { id } = req.params;
+    const deletedMovie = await Movie.findByIdAndDelete(id);
 
-  if (movieIndex === -1) {
-    return res.status(404).json({ message: 'Movie not found' });
+    if (!deletedMovie) {
+      return res.status(404).json({ message: 'Movie not found' });
+    }
+
+    res.status(204).send();
+  } catch (error) {
+    // Si el ID no es válido para MongoDB
+    if (error.name === 'CastError') {
+      return res.status(404).json({ message: 'Movie not found' });
+    }
+
+    res.status(500).json({ message: 'Error deleting movie', error: error.message });
   }
-
-  movies.splice(movieIndex, 1);
-  res.status(204).send();
 }
 
 module.exports = {
