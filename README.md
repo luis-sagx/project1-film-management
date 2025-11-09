@@ -120,6 +120,7 @@ npm test -- --coverage
 # Ejecutar pruebas de un archivo específico
 npm test -- user.test.js
 npm test -- movie.test.js
+npm test -- room.test.js
 ```
 
 ## 📊 Cobertura de Pruebas
