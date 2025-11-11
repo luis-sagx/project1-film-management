@@ -163,16 +163,16 @@ El proyecto cuenta con **más del 90% de cobertura** en pruebas unitarias.
 
 ```
 test/
-├── user.test.js      - 21 tests para gestión de usuarios
-├── movie.test.js     - 21 tests para gestión de películas
-├── room.test.js      - 21 tests para gestión de salas
-└── showtime.test.js  - 22 tests para gestión de funciones
+├── user.test.js      
+├── movie.test.js    
+├── room.test.js    
+└── showtime.test.js 
 ```
 
 ### 🔧 Configuración de Pruebas
 
-- **Framework de Testing:** Jest 30.2.0
-- **Testing HTTP:** Supertest 7.1.4
+- **Framework de Testing:** Jest 
+- **Testing HTTP:** Supertest 
 - **Base de Datos:** MongoDB Atlas
 - **Ejecución:** Paralela por defecto para mayor velocidad
 - **Aislamiento:** Cada suite de tests usa la misma base de datos pero limpia las colecciones antes de cada test
