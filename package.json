@@ -7,7 +7,9 @@
   },
   "scripts": {
     "test": "jest",
-    "lint": "eslint"
+    "lint": "eslint",
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js"
   },
   "keywords": [],
   "author": "",
@@ -21,6 +23,7 @@
   "devDependencies": {
     "eslint": "^9.39.1",
     "jest": "^30.2.0",
+    "nodemon": "^3.1.10",
     "supertest": "^7.1.4"
   }
 }
