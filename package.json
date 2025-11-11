@@ -6,7 +6,8 @@
     "test": "test"
   },
   "scripts": {
-    "test": "jest",
+    "test": "jest --runInBand",
+    "test:parallel": "jest",
     "lint": "eslint",
     "start": "node src/app.js",
     "dev": "nodemon src/app.js"

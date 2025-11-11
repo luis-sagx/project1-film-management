@@ -15,7 +15,7 @@ const connectDB = async () => {
 };
 
 /**
- * Cierra la conexión a MongoDB (útil para tests)
+ * Cierra la conexión a MongoDB
  */
 const disconnectDB = async () => {
   try {

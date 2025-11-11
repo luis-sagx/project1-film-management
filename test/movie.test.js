@@ -4,24 +4,17 @@ const mongoose = require('mongoose');
 const app = require('./../src/app.js');
 const Movie = require('./../src/models/movie.model.js');
 
-// Conectar a MongoDB antes de todos los tests
-beforeAll(async () => {
-    await mongoose.connect(process.env.MONGODB_URI);
-});
-
 // Limpiar la base de datos antes de cada test
 beforeEach(async () => {
-    await Movie.deleteMany({});
+  await Movie.deleteMany({});
 });
 
 // Desconectar después de todos los tests
 afterAll(async () => {
-    await mongoose.connection.close();
+  await mongoose.connection.close();
 });
 
-describe('Movie API', () => {
-
-    // Prueba de que GET devuelva una lista (puede estar vacía o con datos)
+describe('Movie API', () => {    // Prueba de que GET devuelva una lista (puede estar vacía o con datos)
     test('GET /api/movies should return a list', async () => {
         const res = await request(app).get('/api/movies');
         expect(res.statusCode).toBe(200);

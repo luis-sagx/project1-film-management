@@ -4,11 +4,6 @@ const mongoose = require('mongoose');
 const app = require('./../src/app.js');
 const Room = require('./../src/models/room.model.js');
 
-// Conectar a MongoDB antes de todos los tests
-beforeAll(async () => {
-  await mongoose.connect(process.env.MONGODB_URI);
-});
-
 // Limpiar la base de datos antes de cada test
 beforeEach(async () => {
   await Room.deleteMany({});
