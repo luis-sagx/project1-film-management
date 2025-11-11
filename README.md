@@ -104,28 +104,100 @@ npm install
 Crear un archivo `.env` en la raíz del proyecto:
 
 ```env
-MONGODB_URI=mongodb+srv://usuario:password@cluster.mongodb.net/film-management
+MONGODB_URI=mongodb+srv://<tu_usuario>:<tu_password>@...
 ```
 
 ## 🧪 Pruebas
 
+### Comandos de Ejecución
+
 ```bash
-# Ejecutar todas las pruebas
+# Ejecutar todas las pruebas en paralelo
 npm test
 
-# Ejecutar pruebas con cobertura
+# Ejecutar pruebas con reporte de cobertura
 npm test -- --coverage
 
+# Ejecutar pruebas de forma secuencial (útil para debugging)
+npm run test:sequential
 
 # Ejecutar pruebas de un archivo específico
 npm test -- user.test.js
 npm test -- movie.test.js
 npm test -- room.test.js
+npm test -- showtime.test.js
+
+# Ejecutar pruebas de regla
+npm run lint
 ```
 
-## 📊 Cobertura de Pruebas
+### 📊 Cobertura de Pruebas
 
-El proyecto cuenta con más del 90% de cobertura en pruebas unitarias e integración.
+El proyecto cuenta con **más del 90% de cobertura** en pruebas unitarias.
+
+### 🎯 Tipos de Pruebas Implementadas
+
+#### 1. **Pruebas de Endpoints Exitosos**
+- ✅ Creación de recursos (POST)
+- ✅ Lectura de recursos (GET individual y listado)
+- ✅ Actualización de recursos (PUT)
+- ✅ Eliminación de recursos (DELETE)
+
+#### 2. **Pruebas de Validación**
+- ❌ Campos requeridos faltantes
+- ❌ Formatos inválidos (email, year, duration, etc.)
+- ❌ Valores fuera de rango (números negativos, años incorrectos)
+- ❌ Restricciones de unicidad (emails duplicados, nombres de salas)
+
+#### 3. **Pruebas de Integridad Referencial**
+- Validación de existencia de entidades relacionadas (movie_id, room_id)
+- Manejo de referencias inexistentes
+
+#### 4. **Pruebas de Manejo de Errores**
+- IDs con formato inválido (CastError)
+- Recursos no encontrados (404)
+- Errores de base de datos (conexión perdida)
+- Errores del servidor (500)
+
+### 🏗️ Arquitectura de Pruebas
+
+```
+test/
+├── user.test.js      - 21 tests para gestión de usuarios
+├── movie.test.js     - 21 tests para gestión de películas
+├── room.test.js      - 21 tests para gestión de salas
+└── showtime.test.js  - 22 tests para gestión de funciones
+```
+
+### 🔧 Configuración de Pruebas
+
+- **Framework de Testing:** Jest 30.2.0
+- **Testing HTTP:** Supertest 7.1.4
+- **Base de Datos:** MongoDB Atlas
+- **Ejecución:** Paralela por defecto para mayor velocidad
+- **Aislamiento:** Cada suite de tests usa la misma base de datos pero limpia las colecciones antes de cada test
+
+### 📝 Ejemplo de Test
+
+```javascript
+test('POST /api/users should create a new user', async () => {
+    const newUser = {name: 'Luis', email: 'luis@mail.com'};
+    const res = await request(app).post('/api/users').send(newUser);
+
+    expect(res.statusCode).toBe(201);
+    expect(res.body).toHaveProperty('_id');
+    expect(res.body.name).toBe('Luis');
+});
+```
+
+### 🔄 Ciclo de Vida de los Tests
+
+```javascript
+beforeAll()   → Conectar a MongoDB
+beforeEach()  → Limpiar colecciones
+test()        → Ejecutar prueba individual
+afterAll()    → Cerrar conexión
+```
 
 
 ## 🛠️ Tecnologías

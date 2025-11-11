@@ -35,11 +35,6 @@ async function createRoom(req, res) {
       return res.status(400).json({ message: 'The name of the room already exists' });
     }
 
-    if (error.name === 'ValidationError') {
-      const messages = Object.values(error.errors).map((err) => err.message);
-      return res.status(400).json({ message: messages[0] });
-    }
-
     res.status(500).json({ message: 'Error creating room', error: error.message });
   }
 }
@@ -95,11 +90,6 @@ async function updateRoom(req, res) {
   } catch (error) {
     if (error.name === 'CastError') {
       return res.status(400).json({ message: 'Invalid ID' });
-    }
-
-    if (error.name === 'ValidationError') {
-      const messages = Object.values(error.errors).map((err) => err.message);
-      return res.status(400).json({ message: messages[0] });
     }
 
     res.status(500).json({ message: 'Error updating the room', error: error.message });

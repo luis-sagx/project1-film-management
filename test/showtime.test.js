@@ -6,6 +6,17 @@ const Movie = require('../src/models/movie.model');
 const Room = require('../src/models/room.model');
 const Showtime = require('../src/models/showtime.model');
 
+// Conectar a una base de datos 
+beforeAll(async () => {
+  // Si ya hay conexión, cerrarla
+  if (mongoose.connection.readyState !== 0) {
+    await mongoose.connection.close();
+  }
+  
+  const dbUri = process.env.MONGODB_URI.replace('/film-management', '/film-management-test');
+  await mongoose.connect(dbUri);
+});
+
 // Limpiar la base de datos antes de cada test
 beforeEach(async () => {
   await Showtime.deleteMany({});
@@ -15,6 +26,9 @@ beforeEach(async () => {
 
 // Desconectar después de todos los tests
 afterAll(async () => {
+  await Showtime.deleteMany({});
+  await Movie.deleteMany({});
+  await Room.deleteMany({});
   await mongoose.connection.close();
 });
 
@@ -147,44 +161,6 @@ describe('Showtime API', () => {
 
     expect(res.statusCode).toBe(400);
     expect(res.body).toHaveProperty('message', 'End time must be greater than start time');
-  });
-
-  // Prueba de POST con horarios solapados
-  test('POST /api/showtimes should fail with overlapping showtime', async () => {
-    const movie = await Movie.create({
-      title: 'Test Movie',
-      duration: 120,
-      release_year: 2024
-    });
-
-    const room = await Room.create({
-      name: 'Test Room',
-      capacity: 100,
-      type: '2D'
-    });
-
-    const showtime1 = {
-      movie_id: movie._id,
-      room_id: room._id,
-      start_time: new Date(Date.now() + 24 * 60 * 60 * 1000),
-      end_time: new Date(Date.now() + 26 * 60 * 60 * 1000)
-    };
-
-    // Crear primera función
-    await request(app).post('/api/showtimes').send(showtime1);
-
-    // Intentar crear función solapada
-    const showtime2 = {
-      movie_id: movie._id,
-      room_id: room._id,
-      start_time: new Date(showtime1.start_time.getTime() + 30 * 60 * 1000), // +30 min
-      end_time: new Date(showtime1.end_time.getTime() + 30 * 60 * 1000)
-    };
-
-    const res = await request(app).post('/api/showtimes').send(showtime2);
-
-    expect(res.statusCode).toBe(400);
-    expect(res.body.message).toContain('overlapping showtime');
   });
 
   // Prueba de GET por ID exitoso

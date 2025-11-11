@@ -4,6 +4,17 @@ const mongoose = require('mongoose');
 const app = require('./../src/app.js');
 const Room = require('./../src/models/room.model.js');
 
+// Conectar a una base de datos
+beforeAll(async () => {
+  // Si ya hay conexión, cerrarla
+  if (mongoose.connection.readyState !== 0) {
+    await mongoose.connection.close();
+  }
+  
+  const dbUri = process.env.MONGODB_URI
+  await mongoose.connect(dbUri);
+});
+
 // Limpiar la base de datos antes de cada test
 beforeEach(async () => {
   await Room.deleteMany({});
@@ -11,6 +22,7 @@ beforeEach(async () => {
 
 // Desconectar después de todos los tests
 afterAll(async () => {
+  await Room.deleteMany({});
   await mongoose.connection.close();
 });
 
