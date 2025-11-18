@@ -23,16 +23,17 @@ const movieSchema = new mongoose.Schema(
     duration: {
       type: Number,
       min: [1, 'Duration must be a positive number'],
-      default: 0
     },
     release_year: {
       type: Number,
       validate: {
-        validator: function(value) {
-          if (value === null || value === undefined) { 
+        validator: function (value) {
+          if (value === null || value === undefined) {
             return true;
           };
-          return /^\d{4}$/.test(String(value));
+          const year = Number(value);
+          const currentYear = new Date().getFullYear();
+          return /^\d{4}$/.test(String(value)) && year >= 1895 && year <= currentYear;
         },
         message: 'Release year must be a 4-digit number'
       },
